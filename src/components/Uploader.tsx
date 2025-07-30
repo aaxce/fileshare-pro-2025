@@ -125,4 +125,37 @@ export default function Uploader() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Add a password (optional)"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="mt-6 w-full px-8 py-3 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
+                >
+                  Upload File
+                </button>
+              </div>
+            )}
+            
+            {uploading && (
+              <div className="mt-6 text-white">
+                <p>Uploading {file?.name}...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mt-4"></div>
+              </div>
+            )}
+            
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+            {error && <p className="mt-4 text-red-500">Error: {error}</p>}
+          </form>
+        )}
+      </div>
+    </>
+  );
+}
