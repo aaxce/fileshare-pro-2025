@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadCloud, File, Check, Copy, Link, KeyRound, Loader, ShieldCheck } from 'lucide-react';
+// Yahan se Loader aur ShieldCheck hata diya hai
+import { UploadCloud, File, Check, Copy, Link, KeyRound } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 
+// Baaki poora file content same rahega
 export default function Uploader() {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState<string>('');

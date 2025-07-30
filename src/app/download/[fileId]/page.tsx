@@ -28,7 +28,8 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-interface PageProps {
+// Yahan PageProps ko badal diya hai
+interface DownloadPageProps {
   params: { fileId: string };
 }
 
@@ -42,7 +43,7 @@ async function getFileData(id: string) {
   }
 }
 
-export default async function DownloadPage({ params }: PageProps) {
+export default async function DownloadPage({ params }: DownloadPageProps) {
   const fileData = await getFileData(params.fileId);
 
   const mainContent = () => {
