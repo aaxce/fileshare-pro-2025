@@ -1,29 +1,32 @@
+// src/components/Uploader.tsx
+
 'use client';
 
 import { useState } from 'react';
-import { UploadCloud, File, Check, Copy } from 'lucide-react';
+import { UploadCloud, File, Check, Copy, Link } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function Uploader() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [fileId, setFileId] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files ? e.target.files[0] : null;
     setFile(selectedFile);
     setError(null);
-    setUploadedUrl(null);
+    setFileId(null);
   };
 
   const copyToClipboard = () => {
-    if (uploadedUrl) {
-      navigator.clipboard.writeText(uploadedUrl);
+    if (fileId) {
+      const url = `${window.location.origin}/download/${fileId}`;
+      navigator.clipboard.writeText(url);
       toast.success('Link Copied!');
     }
   };
-
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file) {
@@ -33,7 +36,7 @@ export default function Uploader() {
 
     setUploading(true);
     setError(null);
-    setUploadedUrl(null);
+    setFileId(null);
     
     const formData = new FormData();
     formData.append('file', file);
@@ -50,7 +53,7 @@ export default function Uploader() {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      setUploadedUrl(data.url);
+      setFileId(data.id); // Save the ID from the API
       setFile(null);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -63,20 +66,23 @@ export default function Uploader() {
     }
   };
 
+  const downloadUrl = fileId ? `${window.location.origin}/download/${fileId}` : '';
+
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-xl mx-auto mt-12">
-        {uploadedUrl ? (
+        {fileId ? (
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-6 text-center">
             <Check className="mx-auto h-12 w-12 text-green-500" />
             <h3 className="text-xl font-semibold text-white mt-4">Upload Successful!</h3>
             <p className="text-slate-400 mt-2">Your file is ready to be shared.</p>
             <div className="flex items-center mt-4 bg-slate-900 border border-slate-700 rounded-md p-2">
+              <Link className="text-slate-400 mr-2" size={20}/>
               <input
                 type="text"
                 readOnly
-                value={uploadedUrl}
+                value={downloadUrl}
                 className="w-full bg-transparent text-slate-300 focus:outline-none"
               />
               <button onClick={copyToClipboard} className="p-2 text-slate-400 hover:text-white">
@@ -84,7 +90,7 @@ export default function Uploader() {
               </button>
             </div>
             <button
-              onClick={() => setUploadedUrl(null)}
+              onClick={() => setFileId(null)}
               className="mt-6 px-6 py-2 rounded-full bg-violet-600 text-white font-semibold hover:bg-violet-700"
             >
               Upload Another File
