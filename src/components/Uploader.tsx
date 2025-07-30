@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-// Yahan se Loader aur ShieldCheck hata diya hai
 import { UploadCloud, File, Check, Copy, Link, KeyRound } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 
-// Baaki poora file content same rahega
 export default function Uploader() {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState<string>('');
@@ -28,7 +26,7 @@ export default function Uploader() {
       toast.success('Link Copied!');
     }
   };
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file) {
@@ -40,22 +38,48 @@ export default function Uploader() {
     setError(null);
     setFileId(null);
     
-    const formData = new FormData();
-    formData.append('file', file);
-    if (password) {
-      formData.append('password', password);
-    }
-
     try {
-      const response = await fetch('/api/upload', {
+      // Step 1: Backend se signature get karo
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const paramsToSign = { timestamp, folder: 'fileshare-pro' };
+      const signResponse = await fetch('/api/sign-upload', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paramsToSign }),
       });
+      const signData = await signResponse.json();
+      if (!signResponse.ok) throw new Error('Could not get upload signature.');
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Something went wrong');
+      // Step 2: File ko direct Cloudinary par upload karo
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', process.env.CLOUDINARY_API_KEY as string);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signData.signature);
+      formData.append('folder', 'fileshare-pro');
 
-      setFileId(data.id);
+      const uploadResponse = await fetch(cloudinaryUrl, { method: 'POST', body: formData });
+      const uploadData = await uploadResponse.json();
+      if (!uploadResponse.ok) throw new Error(uploadData.error.message || 'Cloudinary upload failed.');
+
+      // Step 3: File ki details aur password ko apne server par save karo
+      const fileDetails = {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        cloudinaryUrl: uploadData.secure_url,
+      };
+
+      const saveResponse = await fetch('/api/save-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileDetails, password }),
+      });
+      const saveData = await saveResponse.json();
+      if (!saveResponse.ok) throw new Error('Failed to save file details.');
+
+      setFileId(saveData.id);
       setFile(null);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
