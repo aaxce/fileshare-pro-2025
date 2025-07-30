@@ -1,5 +1,3 @@
-// src/app/api/upload/route.ts
-
 import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { NextResponse } from 'next/server';
 
@@ -7,13 +5,19 @@ cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  timeout: 120000, 
+  timeout: 120000,
 });
 
 export async function POST(request: Request) {
-  // ... (function ka baaki hissa same rahega) ...
-  const file = //...
-  const buffer = //...
+  const formData = await request.formData();
+  const file = formData.get('file') as File;
+
+  if (!file) {
+    return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
+  }
+
+  const fileBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(fileBuffer);
 
   try {
     const result = await new Promise<UploadApiResponse | undefined>((resolve, reject) => {
@@ -27,7 +31,6 @@ export async function POST(request: Request) {
       uploadStream.end(buffer);
     });
 
-    // Yahan par 'any' hata diya hai
     return NextResponse.json({
       message: 'File uploaded successfully',
       url: result?.secure_url,
