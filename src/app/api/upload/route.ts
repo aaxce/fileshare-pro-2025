@@ -1,5 +1,3 @@
-// src/app/api/upload/route.ts
-
 import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { NextResponse } from 'next/server';
 
@@ -7,7 +5,7 @@ cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  timeout: 120000, 
+  timeout: 120000,
 });
 
 export async function POST(request: Request) {
@@ -24,7 +22,10 @@ export async function POST(request: Request) {
   try {
     const result = await new Promise<UploadApiResponse | undefined>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: 'auto', folder: 'fileshare-pro' },
+        {
+          resource_type: 'auto',
+          folder: 'fileshare-pro',
+        },
         (error, result) => {
           if (error) return reject(error);
           resolve(result);

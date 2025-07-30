@@ -1,5 +1,3 @@
-// src/components/Uploader.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -37,8 +35,6 @@ export default function Uploader() {
     setError(null);
     setUploadedUrl(null);
     
-    // NOTE: This uses the old server-based upload. 
-    // We will switch to direct upload after deployment is successful.
     const formData = new FormData();
     formData.append('file', file);
 
@@ -56,7 +52,7 @@ export default function Uploader() {
 
       setUploadedUrl(data.url);
       setFile(null);
-    } catch (err: unknown) { // Yahan 'any' ko 'unknown' se badla hai
+    } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
