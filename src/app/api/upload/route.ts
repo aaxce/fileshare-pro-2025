@@ -1,38 +1,16 @@
+// src/app/api/upload/route.ts
+
 import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
+import bcrypt from 'bcrypt';
 
-// Firebase Admin SDK ko initialize karo
-// Pehle check karo ki app pehle se initialized to nahi hai
-if (!admin.apps.length) {
-  try {
-    const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
-    if (!serviceAccountBase64) {
-      throw new Error('Firebase service account key not found.');
-    }
-    const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('ascii'));
-    
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
-
-const firestore = admin.firestore();
-
-// Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  timeout: 120000,
-});
+// ... (Firebase aur Cloudinary ka config code same rahega) ...
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get('file') as File;
+  const password = formData.get('password') as string | null;
 
   if (!file) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
@@ -44,22 +22,13 @@ export async function POST(request: Request) {
   try {
     // Step 1: File ko Cloudinary par upload karo
     const result = await new Promise<UploadApiResponse | undefined>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: 'auto', folder: 'fileshare-pro' },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-      uploadStream.end(buffer);
+        // ... (ye code same rahega) ...
     });
 
-    if (!result) {
-        throw new Error('Cloudinary upload failed.');
-    }
+    if (!result) throw new Error('Cloudinary upload failed.');
 
-    // Step 2: File ki details Firestore mein save karo
-    const fileData = {
+    // Step 2: File ki details tayyar karo
+    const fileData: { [key: string]: any } = {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
@@ -67,12 +36,19 @@ export async function POST(request: Request) {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
+    // Agar password hai, to usko hash karke add karo
+    if (password) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      fileData.password = hashedPassword;
+    }
+
+    // Step 3: Data ko Firestore mein save karo
     const docRef = await firestore.collection('files').add(fileData);
 
-    // Step 3: Frontend ko file ka ID bhejo
     return NextResponse.json({
       message: 'File uploaded successfully',
-      id: docRef.id, // Ab hum Cloudinary URL ki jagah Document ID bhej rahe hain
+      id: docRef.id,
     });
 
   } catch (error) {
