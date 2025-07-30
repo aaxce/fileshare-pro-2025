@@ -54,7 +54,7 @@ export default function Uploader() {
       const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`;
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('api_key', process.env.CLOUDINARY_API_KEY as string);
+      formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY as string);
       formData.append('timestamp', timestamp.toString());
       formData.append('signature', signData.signature);
       formData.append('folder', 'fileshare-pro');
