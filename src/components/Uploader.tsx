@@ -1,14 +1,12 @@
-// src/components/Uploader.tsx
-
 'use client';
 
 import { useState } from 'react';
-import { UploadCloud, File, Check, Copy, Link, KeyRound } from 'lucide-react';
+import { UploadCloud, File, Check, Copy, Link, KeyRound, Loader, ShieldCheck } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function Uploader() {
   const [file, setFile] = useState<File | null>(null);
-  const [password, setPassword] = useState<string>(''); // Password ke liye naya state
+  const [password, setPassword] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileId, setFileId] = useState<string | null>(null);
@@ -22,7 +20,11 @@ export default function Uploader() {
   };
 
   const copyToClipboard = () => {
-    // ... ye function same rahega ...
+    if (fileId) {
+      const url = `${window.location.origin}/download/${fileId}`;
+      navigator.clipboard.writeText(url);
+      toast.success('Link Copied!');
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,7 +41,7 @@ export default function Uploader() {
     const formData = new FormData();
     formData.append('file', file);
     if (password) {
-      formData.append('password', password); // Password ko form data mein add karo
+      formData.append('password', password);
     }
 
     try {
@@ -68,15 +70,47 @@ export default function Uploader() {
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-xl mx-auto mt-12">
         {fileId ? (
-          // ... Success card ka code same rahega ...
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-6 text-center">
+            <Check className="mx-auto h-12 w-12 text-green-500" />
+            <h3 className="text-xl font-semibold text-white mt-4">Upload Successful!</h3>
+            <p className="text-slate-400 mt-2">Your file is ready to be shared.</p>
+            <div className="flex items-center mt-4 bg-slate-900 border border-slate-700 rounded-md p-2">
+              <Link className="text-slate-400 mr-2" size={20}/>
+              <input
+                type="text"
+                readOnly
+                value={downloadUrl}
+                className="w-full bg-transparent text-slate-300 focus:outline-none"
+              />
+              <button onClick={copyToClipboard} className="p-2 text-slate-400 hover:text-white">
+                <Copy size={20} />
+              </button>
+            </div>
+            <button
+              onClick={() => setFileId(null)}
+              className="mt-6 px-6 py-2 rounded-full bg-violet-600 text-white font-semibold hover:bg-violet-700"
+            >
+              Upload Another File
+            </button>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-8 text-center">
-            {/* Jab file select nahi hai, to ye dikhega */}
             {!file && !uploading && (
-                // ... ye UI same rahega ...
+              <>
+                <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
+                <h3 className="text-xl font-semibold text-white mt-4">
+                  Drag and drop your file here
+                </h3>
+                <p className="text-slate-400 mt-2">or</p>
+                <label
+                  htmlFor="file-upload"
+                  className="mt-4 inline-block cursor-pointer px-6 py-2 rounded-full font-semibold text-white bg-violet-600 hover:bg-violet-700"
+                >
+                  Browse File
+                </label>
+              </>
             )}
 
-            {/* Jab file select ho jaye, to ye dikhega */}
             {file && !uploading && (
               <div className="text-white">
                 <div className="flex items-center justify-center text-lg">
@@ -84,7 +118,6 @@ export default function Uploader() {
                   <span>{file.name}</span>
                 </div>
                 
-                {/* Naya Password Field */}
                 <div className="relative mt-6">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
                   <input 
@@ -92,28 +125,4 @@ export default function Uploader() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Add a password (optional)"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-violet-500 focus:outline-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="mt-6 w-full px-8 py-3 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
-                >
-                  Upload File
-                </button>
-              </div>
-            )}
-            
-            {/* Jab uploading chal rahi ho */}
-            {uploading && (
-              // ... ye UI same rahega ...
-            )}
-
-            {error && <p className="mt-4 text-red-500">Error: {error}</p>}
-          </form>
-        )}
-      </div>
-    </>
-  );
-}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-
