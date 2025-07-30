@@ -36,37 +36,32 @@ export default function Uploader() {
     setUploading(true);
     setError(null);
     setUploadedUrl(null);
-
-    const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`;
+    
+    // NOTE: This uses the old server-based upload. 
+    // We will switch to direct upload after deployment is successful.
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const paramsToSign = { timestamp, folder: 'fileshare-pro' };
-      const signResponse = await fetch('/api/sign-upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
-        body: JSON.stringify({ paramsToSign }),
+        body: formData,
       });
-      const signData = await signResponse.json();
-      const { signature } = signData;
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('api_key', process.env.CLOUDINARY_API_KEY as string);
-      formData.append('timestamp', timestamp.toString());
-      formData.append('signature', signature);
-      formData.append('folder', 'fileshare-pro');
+      const data = await response.json();
 
-      const uploadResponse = await fetch(url, { method: 'POST', body: formData });
-      const uploadData = await uploadResponse.json();
-
-      if (!uploadResponse.ok) {
-        throw new Error(uploadData.error.message || 'Cloudinary upload failed.');
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong');
       }
-      
-      setUploadedUrl(uploadData.secure_url);
-      setFile(null); // Reset file input after successful upload
-    } catch (err: any) {
-      setError(err.message);
+
+      setUploadedUrl(data.url);
+      setFile(null);
+    } catch (err: unknown) { // Yahan 'any' ko 'unknown' se badla hai
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred.');
+      }
     } finally {
       setUploading(false);
     }
@@ -74,10 +69,8 @@ export default function Uploader() {
 
   return (
     <>
-      {/* Notification component */}
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-xl mx-auto mt-12">
-        {/* Upload Result Card */}
         {uploadedUrl ? (
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-6 text-center">
             <Check className="mx-auto h-12 w-12 text-green-500" />
@@ -102,7 +95,6 @@ export default function Uploader() {
             </button>
           </div>
         ) : (
-          /* Upload Form Card */
           <form
             onSubmit={handleSubmit}
             className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-8 text-center"
@@ -136,7 +128,6 @@ export default function Uploader() {
             {uploading && (
               <div className="mt-6 text-white">
                 <p>Uploading {file?.name}...</p>
-                {/* Simple spinner */}
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto mt-2"></div>
               </div>
             )}
